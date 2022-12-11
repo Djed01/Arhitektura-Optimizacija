@@ -5,13 +5,14 @@ SECTION .data
     len_error equ $-error_msg
     num_of_ranges dq 0
     num_of_elements dq 0
+    buffer_size dq 0
     inputFile db 'input.bin', 0
     outputFile db 'output.bin',0
 
 SECTION .bss
     array resq 1
     path resq 1
-    buffer resq 1
+    buffer resd 1
 
 SECTION .text
 
@@ -25,6 +26,7 @@ _start:
     mov qword [num_of_ranges],rbx; Iz rbx-a uzimamo broj ospega
     cmp qword [num_of_ranges],0;
     jbe error_end ;ako je br. opsega <= 0 greska
+
     ;Alokacija memorije za niz opsega
     xor rax,rax ; Cistimo rax
     xor rbx,rbx ; Cistimo rbx
@@ -44,22 +46,41 @@ _start:
     mov r9,0 ; Podesimo offset na 0
     mov rax,9 ; Broj sistemskog poziva za mmap
     syscall
-    mov [buffer],rax ; Sada na adresi [buffer] imamo adresu alocirane memorije
+    mov qword [buffer],rax ; Sada na adresi [buffer] imamo adresu alocirane memorije
 
-    xor rax,rax;
+    xor rax,rax
+    xor rbx,rbx
 
+    ;Cuvamo velicinu baffera
+    mov rax,[num_of_elements]
+    mov rbx,4 ; mnozimo sa 4 posto je svaki element velicine 4 bajta (int)
+    mul rbx
+    mov [buffer_size],rax
+
+    xor rax,rax
+    xor rcx,rcx
+    xor rbx,rbx
+    xor rdi,rdi
+    xor rsi,rsi
+    xor rdx,rdx
+
+    ;Otvaranje fajla
     mov rax,2
-    mov rdi,[inputFile]
+    mov rdi,inputFile
     mov rsi,0
+    syscall
     cmp rax,-1
-    je error_end ; neuspjesno otvaranje fajla
+    je error_end ; provjerimo da li smo uspjesno otvorili fajl
+
+    mov rdi,rax
     mov rax,0
-    mov rdi,0
     mov rsi,[buffer]
-    mov rdx,[num_of_elements]
+    mov rdx,[buffer_size]
+    syscall
 
-
-
+    mov ebx,dword [buffer]
+    xor rax,rax
+    mov eax,ebx
 
 
     mov rax,60
