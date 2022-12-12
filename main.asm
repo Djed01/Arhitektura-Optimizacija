@@ -6,26 +6,30 @@ SECTION .data
     num_of_ranges dq 0
     num_of_elements dq 0
     buffer_size dq 0
-    inputFile db 'input.bin', 0
-    outputFile db 'output.bin',0
-
 SECTION .bss
     array resq 1
-    path resq 1
+    inputFilePath resq 1
+    outputFilePath resq 1
     buffer resd 1
 
 SECTION .text
 
 _start:
     pop rax; ; Sa steka skidamo broj argumenata
-    cmp rax,2;
-    jne error_end ; ako je br. argumenata manji od 2 greska
-    pop rax ; niz karakter komande
+    cmp rax,4 ; 4 argumenta: poziv programa, broj opsega, ulazni fajl, izlazni fajl
+    jne error_end ; ako je br. argumenata nije jednak 4 greska
+    pop rax ; niz karaktera komande
     pop rax ; adresa prvog argumenta
     call atoi ; string na adresi u rax-u konvertujemo u int, a rezultat smijestamo u rbx
     mov qword [num_of_ranges],rbx; Iz rbx-a uzimamo broj ospega
     cmp qword [num_of_ranges],0;
     jbe error_end ;ako je br. opsega <= 0 greska
+
+    pop rax ; skidamo putanju ulaznog fajla
+    mov [inputFilePath],rax ; smjestamo je u dato polje
+
+    pop rax ; skidamo putanju izlaznog fajla
+    mov [outputFilePath],rax ; smjestamo ga u dato polje
 
     ;Alokacija memorije za niz opsega
     xor rax,rax ; Cistimo rax
@@ -33,11 +37,12 @@ _start:
     xor rcx,rcx ; Cistimo rcx
     xor rdx,rdx ; Cistimo rdx
     mov qword rax,[num_of_ranges] ; U rax prebacujemo br. opsega
-    mov rbx,2 ; 
+    mov rbx,2 ; Svaki par sadrzi 2 elementa
     mul rbx ; Mnozimo sa 2 -> broj elemenata niza
     mov qword [num_of_elements],rax ; Sacuvacemo broj elemenata u datom polju za kasnije
     mov rbx,4
     mul rbx ; Pomnozimo sa 4, jer toliko bajta ima svaki podatak
+    mov [buffer_size],rax ; cuvamo velicinu buffera
     mov rdi,0 ; U rdi stavljamo 0, kernel alocira memorijski prostor bilo gdje pa u rax vraca adresu koja vodi do tog prostora
     mov rsi,rax ; U rsi ide kolicina bajtova koje alociramo
     mov rdx,2 ; Stavljamo prot value, u nasem slucaju 2, zelimo da pisemo po toj memoriji (kao i da citamo)
@@ -49,35 +54,28 @@ _start:
     mov qword [buffer],rax ; Sada na adresi [buffer] imamo adresu alocirane memorije
 
     xor rax,rax
-    xor rbx,rbx
-
-    ;Cuvamo velicinu baffera
-    mov rax,[num_of_elements]
-    mov rbx,4 ; mnozimo sa 4 posto je svaki element velicine 4 bajta (int)
-    mul rbx
-    mov [buffer_size],rax
-
-    xor rax,rax
     xor rcx,rcx
     xor rbx,rbx
-    xor rdi,rdi
-    xor rsi,rsi
-    xor rdx,rdx
 
     ;Otvaranje fajla
     mov rax,2
-    mov rdi,inputFile
-    mov rsi,0
+    mov rdi,[inputFilePath]
+    mov rsi,0 ; otvaramo u read modu
     syscall
-    cmp rax,-1
-    je error_end ; provjerimo da li smo uspjesno otvorili fajl
+    mov rdi,rax ; U rdi stavljamo FD 
+    cmp rdi,-1
+    je error_end ; provjerili smo da li je uspjesno otvaranje, (u rax se vraca FD, ako je greska -1)
 
-    mov rdi,rax
-    mov rax,0
-    mov rsi,[buffer]
-    mov rdx,[buffer_size]
+    ;Citanje iz fajla
+    mov rax,0 ; fd
+    mov rsi,[buffer] ;skladistimo podatke u buffer
+    mov rdx,[buffer_size] ; citamo buffer_size bajtova
     syscall
 
+    mov rax,3
+    syscall ; zatvranje fajla
+
+    xor rbx,rbx
     mov ebx,dword [buffer]
     xor rax,rax
     mov eax,ebx
