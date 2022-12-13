@@ -6,11 +6,12 @@ SECTION .data
     num_of_ranges dq 0
     num_of_elements dq 0
     buffer_size dq 0
+    shift dq 0
 SECTION .bss
     array resq 1
     inputFilePath resq 1
     outputFilePath resq 1
-    buffer resd 1
+    buffer resq 1
 
 SECTION .text
 
@@ -68,17 +69,30 @@ _start:
 
     ;Citanje iz fajla
     mov rax,0 ; fd
-    mov rsi,[buffer] ;skladistimo podatke u buffer
+    mov rsi,buffer ;skladistimo podatke u buffer
     mov rdx,[buffer_size] ; citamo buffer_size bajtova
     syscall
 
     mov rax,3
     syscall ; zatvranje fajla
 
-    xor rbx,rbx
-    mov ebx,dword [buffer]
+
+    xor rcx,rcx
+    mov rcx,[num_of_ranges]; broj iteracija
+    mov rsi,0 ; Brojac za indeksiranje
     xor rax,rax
-    mov eax,ebx
+    xor rbx,rbx
+
+    petlja:
+        xor rax,rax
+        xor rbx,rbx
+        xor rdx,rdx
+        mov rdx,buffer
+        mov eax,dword [rdx+rsi*8]
+        mov ebx,dword [rdx+rsi*8+4]
+        call findPrime
+        inc rsi
+        loop petlja
 
 
     mov rax,60
@@ -112,4 +126,9 @@ atoi:
         add rbx, rcx ; Saberemo trenutnu cifru na rezultat
         jmp .top 
         .done:
+        ret
+
+findPrime:
+        
+
         ret
