@@ -6,7 +6,15 @@ SECTION .data
     num_of_ranges dq 0
     num_of_elements dq 0
     buffer_size dq 0
-    shift dq 0
+    first_element_of_range dq 0
+    last_element_of_range dq 0
+    half_of_last_element_of_range dq 0
+    num_iterations dq 0
+    counter dq 0
+    counter_of_prime dq 0
+    temp_rsi dq 0
+    temp_rcx dq 0
+    temp_rdx dq 0
 SECTION .bss
     array resq 1
     inputFilePath resq 1
@@ -82,18 +90,95 @@ _start:
     mov rsi,0 ; Brojac za indeksiranje
     xor rax,rax
     xor rbx,rbx
+    
 
     petlja:
         xor rax,rax
         xor rbx,rbx
         xor rdx,rdx
         mov rdx,buffer
-        mov eax,dword [rdx+rsi*8]
-        mov ebx,dword [rdx+rsi*8+4]
-        call findPrime
-        inc rsi
-        loop petlja
+        mov eax,dword [rdx+rsi*8] ;prvi element opsega
+        mov ebx,dword [rdx+rsi*8+4] ;drugi element opsega
 
+        mov [temp_rsi],rsi
+        mov [temp_rdx],rdx
+        mov [temp_rcx],rcx
+
+        findPrime:
+        ;loop elements
+        mov [first_element_of_range],rax
+        mov [last_element_of_range],rbx
+        sub rbx,[first_element_of_range] ;rbx-first = numIterations
+        mov [num_iterations],rbx;
+        mov rsi,[first_element_of_range] ; rsi brojac
+        mov rcx,[num_iterations];
+
+        vanjskaPetlja:
+            mov rbx,1
+            unutrasnjaPetlja:
+            inc rbx
+            xor rdx,rdx
+            mov rax,rsi ; u raxu trenutni element niza
+            div qword rbx ; dijelimo pa je ostatak u rdx
+            cmp rdx,0 ; ako je ostatak pri dijeljenju 0 inkrementujemo brojac
+            jne bottom
+            mov rax,[counter]
+            inc rax
+            mov [counter],rax ; povecavamo brojac
+            bottom:
+            cmp rbx,rsi
+            jne unutrasnjaPetlja
+
+        mov rax,[counter]
+        cmp rax,1
+        jne skip
+        mov rax,[counter_of_prime] ;uvecavamo brojac prostih brojeva
+        inc rax
+        mov [counter_of_prime],rax
+        skip:
+        mov rax,0
+        mov [counter],rax; restartujemo brojac
+        inc rsi ; element niza
+        loop vanjskaPetlja
+
+        xor rdx,rdx
+        xor rcx,rcx
+        xor rsi,rsi
+        mov rdx,qword [temp_rdx]
+        mov rcx,qword [temp_rcx]
+        mov rsi,qword [temp_rsi]
+        xor rax,rax
+        mov [temp_rsi],rax
+
+        inc rsi ; uvecavamo brojac
+
+        cmp rsi,[num_of_ranges]
+        jne petlja
+
+    xor rbx,rbx
+    mov rbx,[counter_of_prime]
+    xor rax,rax
+    xor rdi,rdi
+    xor rsi,rsi
+
+
+    ; Kreiranje fajla
+    mov rax,85 ; Broj sistemskog poziva za kreiranje
+    mov rdi,[outputFilePath] ; U rdi stavljamo adresu do putanje do fajla
+    mov rsi,1ffh ; Dodajemo prava pristupa za fajl koji kreiramo (<=> chmod 777)
+    syscall 
+    mov rax,2 ; Broj sistemskog poziva za otvaranje
+    mov rdi,[outputFilePath] ; U rdi fajl koji otvaramo   
+    mov rsi,1 ; Otvaramo u write mode
+    syscall
+    mov rdi,rax ; U rdi stavljamo FD 
+    cmp rdi,-1
+    je error_end ; provjerili smo da li je uspjesno otvaranje, (u rax se vraca FD, ako je greska -1)
+    mov rax,1 ; Broj sist. poziva za upis
+    mov rdi,1 ; stdout
+    mov rdx,1 ; Upisuje se 8-bajtni podatak 
+    mov rsi,counter_of_prime ; Source u rsi
+    syscall ; Upis broja prostih brojeva
 
     mov rax,60
     mov rdi,0
@@ -112,7 +197,7 @@ error_end:
 
 atoi:
         xor rbx, rbx ; Cistimo rbx, tu cemo ostaviti rezultat
-        xor rcx,rcx ; Ocisticemo i rxc jer cemo sa njim uzimati cifre
+        xor rcx,rcx ; Ocisticemo i rcx jer cemo sa njim uzimati cifre
         .top:
         mov byte cl, [rax] ; Uzimamo jedan karakter
         inc rax ; Inkrementujemo za jedan bajt
@@ -126,9 +211,4 @@ atoi:
         add rbx, rcx ; Saberemo trenutnu cifru na rezultat
         jmp .top 
         .done:
-        ret
-
-findPrime:
-        
-
         ret
