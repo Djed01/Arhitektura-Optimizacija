@@ -100,6 +100,9 @@ _start:
         mov eax,dword [rdx+rsi*8] ;prvi element opsega
         mov ebx,dword [rdx+rsi*8+4] ;drugi element opsega
 
+        cmp rax,rbx
+        jg error_end ; ako opseg nije dobro specificiran
+
         mov [temp_rsi],rsi
         mov [temp_rdx],rdx
         mov [temp_rcx],rcx
@@ -175,7 +178,6 @@ _start:
     cmp rdi,-1
     je error_end ; provjerili smo da li je uspjesno otvaranje, (u rax se vraca FD, ako je greska -1)
     mov rax,1 ; Broj sist. poziva za upis
-    mov rdi,1 ; stdout
     mov rdx,1 ; Upisuje se 8-bajtni podatak 
     mov rsi,counter_of_prime ; Source u rsi
     syscall ; Upis broja prostih brojeva
