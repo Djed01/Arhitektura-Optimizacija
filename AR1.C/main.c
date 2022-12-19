@@ -10,7 +10,7 @@ int main(int argc,char* argv[])
 {
     FILE *fp_input;
     FILE *fp_output;
-    int numOfRanges = atoi(argv[1]);
+    int numOfRanges = atoi(argv[1])+1;
     int rangesArray[2*numOfRanges];
     int numOfPrime = 0;
 
