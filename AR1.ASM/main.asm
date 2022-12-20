@@ -87,6 +87,7 @@ _start:
 
     xor rcx,rcx
     mov rcx,[num_of_ranges]; broj iteracija
+    sub rcx,1 ; num_of_ranges - 1
     mov rsi,0 ; Brojac za indeksiranje
     xor rax,rax
     xor rbx,rbx
@@ -178,7 +179,7 @@ _start:
     cmp rdi,-1
     je error_end ; provjerili smo da li je uspjesno otvaranje, (u rax se vraca FD, ako je greska -1)
     mov rax,1 ; Broj sist. poziva za upis
-    mov rdx,1 ; Upisuje se 8-bajtni podatak 
+    mov rdx,4 ; Upisuje se 4-bajtni podatak 
     mov rsi,counter_of_prime ; Source u rsi
     syscall ; Upis broja prostih brojeva
 

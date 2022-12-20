@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void ErrorEnd(){
+int ErrorEnd(){
     printf("Greska sa ulaznim fajlom!");
     return -1;
 }
@@ -19,22 +19,23 @@ int main(int argc,char* argv[])
         ErrorEnd();
     }
 
-    fread(rangesArray,sizeof(rangesArray),1,fp_input);
+    fread(rangesArray,sizeof(int),numOfRanges*2,fp_input);
     fclose(fp_input);
 
-    for(int i=0;i<2*numOfRanges;i++){
+    for(int i=0;i<numOfRanges-1;i++){
         int first = rangesArray[i*2];
         int last = rangesArray[i*2+1];
-        if(first>last) ErrorEnd;
+        //printf("%d first:%d last:%d\n",i,first,last);
+        if(first>last) ErrorEnd();
         for(int j=first;j<=last;j++){
             int temp=0;
             for(int k=2;k<=last;k++){
                 if(j%k==0){
-
                     temp++;
                 }
             }
             if(temp==1){
+               // printf("%d \n",j);
                 numOfPrime++;
             }
         }
@@ -45,7 +46,7 @@ int main(int argc,char* argv[])
     if(fp_output == NULL){
         ErrorEnd();
     }
-    fwrite(&numOfPrime, sizeof(numOfPrime), 1, fp_output);
+    fwrite(&numOfPrime, sizeof(int), 1, fp_output);
 
 
     return 0;
