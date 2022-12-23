@@ -16,7 +16,6 @@ SECTION .data
     temp_rcx dq 0
     temp_rdx dq 0
 SECTION .bss
-    array resq 1
     inputFilePath resq 1
     outputFilePath resq 1
     buffer resq 1

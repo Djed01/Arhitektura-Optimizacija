@@ -3,7 +3,6 @@
 #include <time.h>
 
 int main(int argc,char* argv[]) {
-    //srand(time(NULL));
     int numOfElements = 100;
     FILE *fp = fopen("input.bin","wb");
     int* rangesArray = calloc(2*numOfElements, sizeof(int));
@@ -14,7 +13,7 @@ int main(int argc,char* argv[]) {
     int i=0;
     while(i<numOfElements){
         int first = 2;
-        int last = 50;
+        int last = 1000;
         if(first<last){
             rangesArray[i*2] = first;
             rangesArray[i*2+1] = last;
@@ -22,7 +21,6 @@ int main(int argc,char* argv[]) {
             i++;
         }
     }
-
     fwrite(rangesArray, sizeof(int), numOfElements, fp);
     fclose(fp);
     return 0;

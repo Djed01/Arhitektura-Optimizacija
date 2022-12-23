@@ -13,17 +13,16 @@ SECTION .data
     counter dq 0
     counter_of_prime dq 0
     temp_rcx dq 0
+    align 16
     maska dd 0,0,0,0
+    iterationPair dd 0,0,0,0
+    temp dd 0,0,0,0
+    ourNumber dd 0,0,0,0
 SECTION .bss
-    array resq 1
     inputFilePath resq 1
     outputFilePath resq 1
     buffer resq 1
-    align 16
-    iterationPair resd 4
-    temp resd 4
-    ourNumber resd 4
-
+    
 SECTION .text
 
 _start:
@@ -87,6 +86,7 @@ _start:
     mov rax,3
     syscall ; zatvranje fajla
 
+    xor rsi,rsi
     mov rsi,0;
 petljaInitail:
         xor rax,rax
@@ -117,6 +117,7 @@ petljaInitail:
         inc rax
         mov [counter_of_prime],rax
     nije_prost:
+        xor rcx,rcx
         mov rcx,[temp_rcx] 
         inc rcx
         cmp r8,[last_element_of_range]
@@ -155,7 +156,7 @@ isItPrime:
     MOVSS [ourNumber],  xmm0 
     MOVSS [ourNumber+4], xmm0
     MOVSS [ourNumber+8],  xmm0
-    MOVSS [ ourNumber+12], xmm0
+    MOVSS [ourNumber+12], xmm0
     movaps xmm0,[ourNumber] ;ucitavamo ta 4 ista broja sa mem.lokacije u xmm0 registar
     xor rdx,rdx
     mov rax,r8
