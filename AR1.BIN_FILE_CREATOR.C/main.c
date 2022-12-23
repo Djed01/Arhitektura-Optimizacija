@@ -4,19 +4,17 @@
 
 int main(int argc,char* argv[]) {
     //srand(time(NULL));
-    int numOfElements = 100000;
+    int numOfElements = 100;
     FILE *fp = fopen("input.bin","wb");
-   // int* rangesArray = calloc(100, sizeof(int));
-      int rangesArray[numOfElements];
+    int* rangesArray = calloc(2*numOfElements, sizeof(int));
     if(fp == NULL) {
         printf("error creating file");
         return -1;
     }
-
     int i=0;
-    while(i<numOfElements/2){
+    while(i<numOfElements){
         int first = 2;
-        int last = 1000;
+        int last = 50;
         if(first<last){
             rangesArray[i*2] = first;
             rangesArray[i*2+1] = last;
