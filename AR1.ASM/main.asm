@@ -15,10 +15,12 @@ SECTION .data
     temp_rsi dq 0
     temp_rcx dq 0
     temp_rdx dq 0
+
 SECTION .bss
+    buffer resd 1000000
     inputFilePath resq 1
     outputFilePath resq 1
-    buffer resq 1
+    
 
 SECTION .text
 
