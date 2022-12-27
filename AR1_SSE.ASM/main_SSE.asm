@@ -27,30 +27,44 @@ SECTION .text
 
 _start:
     pop rax; ; Sa steka skidamo broj argumenata
-    cmp rax,4 ; 4 argumenta: poziv programa, broj opsega, ulazni fajl, izlazni fajl
-    jne error_end ; ako je br. argumenata nije jednak 4 greska
+    cmp rax,3 ; 3 argumenta: poziv programa, ulazni fajl, izlazni fajl
+    jne error_end ; ako je br. argumenata nije jednak 3 greska
     pop rax ; niz karaktera komande
-    pop rax ; adresa prvog argumenta
-    call atoi ; string na adresi u rax-u konvertujemo u int, a rezultat smijestamo u rbx
-    mov qword [num_of_ranges],rbx; Iz rbx-a uzimamo broj ospega
-    cmp qword [num_of_ranges],0;
-    jbe error_end ;ako je br. opsega <= 0 greska
-
     pop rax ; skidamo putanju ulaznog fajla
     mov [inputFilePath],rax ; smjestamo je u dato polje
 
     pop rax ; skidamo putanju izlaznog fajla
     mov [outputFilePath],rax ; smjestamo ga u dato polje
 
-    ;Alokacija memorije za niz opsega
+    ;Otvaranje fajla
+    mov rax,2
+    mov rdi,[inputFilePath]
+    mov rsi,0 ; otvaramo u read modu
+    syscall
+    push rax
+    mov rdi,rax ; U rdi stavljamo FD 
+    cmp rdi,-1
+    je error_end ; provjerili smo da li je uspjesno otvaranje, (u rax se vraca FD, ako je greska -1)
+
+    ;Citanje iz fajla
+    mov rax,0 ; fd
+    mov rsi,num_of_ranges ;skladistimo podatke u num_of_elements
+    mov rdx,4 ; citamo 4 bajta (int)
+    syscall
+
+    xor rax,rax
+    xor rbx,rbx
+    mov rax,qword [num_of_ranges]
+    mov rbx,2
+    mul rbx
+    mov [num_of_elements],rax;
+
+    ;Alokacija memorije
     xor rax,rax ; Cistimo rax
     xor rbx,rbx ; Cistimo rbx
     xor rcx,rcx ; Cistimo rcx
     xor rdx,rdx ; Cistimo rdx
-    mov qword rax,[num_of_ranges] ; U rax prebacujemo br. opsega
-    mov rbx,2 ; Svaki par sadrzi 2 elementa
-    mul rbx ; Mnozimo sa 2 -> broj elemenata niza
-    mov qword [num_of_elements],rax ; Sacuvacemo broj elemenata u datom polju za kasnije
+    mov qword rax,[num_of_elements] ; U rax prebacujemo br. elemenata
     mov rbx,4
     mul rbx ; Pomnozimo sa 4, jer toliko bajta ima svaki podatak
     mov [buffer_size],rax ; cuvamo velicinu buffera
@@ -62,22 +76,14 @@ _start:
     mov r9,0 ; Podesimo offset na 0
     mov rax,9 ; Broj sistemskog poziva za mmap
     syscall
-    mov [buffer],rax ; Sada na adresi [buffer] imamo adresu alocirane memorije
+    mov qword [buffer],rax ; Sada na adresi [buffer] imamo adresu alocirane memorije
 
     xor rax,rax
     xor rcx,rcx
     xor rbx,rbx
 
-    ;Otvaranje fajla
-    mov rax,2
-    mov rdi,[inputFilePath]
-    mov rsi,0 ; otvaramo u read modu
-    syscall
-    mov rdi,rax ; U rdi stavljamo FD 
-    cmp rdi,-1
-    je error_end ; provjerili smo da li je uspjesno otvaranje, (u rax se vraca FD, ako je greska -1)
-
     ;Citanje iz fajla
+    pop rdi
     mov rax,0 ; fd
     mov rsi,buffer ;skladistimo podatke u buffer
     mov rdx,[buffer_size] ; citamo buffer_size bajtova
@@ -88,6 +94,7 @@ _start:
 
     xor rsi,rsi
     mov rsi,0;
+
 petljaInitail:
         xor rax,rax
         xor rbx,rbx
@@ -159,8 +166,14 @@ isItPrime:
     MOVSS [ourNumber+12], xmm0
     movaps xmm0,[ourNumber] ;ucitavamo ta 4 ista broja sa mem.lokacije u xmm0 registar
     xor rdx,rdx
+
+    ;Racunamo krijen datog broja
     mov rax,r8
-    sub rax,1;smanjujemo broj iteracija sa 1 jer nam ne treba iteracija kad je i = 1
+    ;cvtsi2sd  xmm0, eax
+    ;sqrtsd    xmm0, xmm0
+    ;cvttsd2si  eax, xmm0
+    sub rax,1 ; ne ukljucujemo 1
+
     mov rcx,4
     div rcx ;rax je rez,rdx ostatak, rax predstavlja broj inicijalnih iteracija a rdx su iteracije za ostatak
     mov rcx,2 ;i
@@ -172,7 +185,9 @@ isItPrime:
     mov dword [maska+8],0
     mov dword [maska+12],0
     push rdx ; pushamo ostatak koji ce nam trebati kasnije
-    mov rdx,0 
+    mov rdx,0
+    cmp rax,0
+    je kraj_petlje
 petlja:
 	cmp rdx,rax
 	je kraj_petlje ; ako smo dosli do poslednjeg elementa zavrsavamo sa iteracijama
@@ -305,7 +320,7 @@ kraj_provjere2:
     xorps xmm3,xmm3
     xorps xmm4,xmm4
 
-    cmp r9,1
+    cmp r9,1 
     jne not_prime
     mov r10,0
     jmp end

@@ -5,7 +5,7 @@ SECTION .data
     len_error equ $-error_msg
     num_of_ranges dq 0
     num_of_elements dq 0
-    buffer_size dq 0
+    buffer_size dd 0
     first_element_of_range dq 0
     last_element_of_range dq 0
     half_of_last_element_of_range dq 0
@@ -26,30 +26,44 @@ SECTION .text
 
 _start:
     pop rax; ; Sa steka skidamo broj argumenata
-    cmp rax,4 ; 4 argumenta: poziv programa, broj opsega, ulazni fajl, izlazni fajl
-    jne error_end ; ako je br. argumenata nije jednak 4 greska
+    cmp rax,3 ; 3 argumenta: poziv programa, ulazni fajl, izlazni fajl
+    jne error_end ; ako je br. argumenata nije jednak 3 greska
     pop rax ; niz karaktera komande
-    pop rax ; adresa prvog argumenta
-    call atoi ; string na adresi u rax-u konvertujemo u int, a rezultat smijestamo u rbx
-    mov qword [num_of_ranges],rbx; Iz rbx-a uzimamo broj ospega
-    cmp qword [num_of_ranges],0;
-    jbe error_end ;ako je br. opsega <= 0 greska
-
     pop rax ; skidamo putanju ulaznog fajla
     mov [inputFilePath],rax ; smjestamo je u dato polje
 
     pop rax ; skidamo putanju izlaznog fajla
     mov [outputFilePath],rax ; smjestamo ga u dato polje
 
+    ;Otvaranje fajla
+    mov rax,2
+    mov rdi,[inputFilePath]
+    mov rsi,0 ; otvaramo u read modu
+    syscall
+    push rax
+    mov rdi,rax ; U rdi stavljamo FD 
+    cmp rdi,-1
+    je error_end ; provjerili smo da li je uspjesno otvaranje, (u rax se vraca FD, ako je greska -1)
+
+    ;Citanje iz fajla
+    mov rax,0 ; fd
+    mov rsi,num_of_ranges ;skladistimo podatke u num_of_elements
+    mov rdx,4 ; citamo 4 bajta (int)
+    syscall
+
+    xor rax,rax
+    xor rbx,rbx
+    mov rax,qword [num_of_ranges]
+    mov rbx,2
+    mul rbx
+    mov [num_of_elements],rax;
+
     ;Alokacija memorije za niz opsega
     xor rax,rax ; Cistimo rax
     xor rbx,rbx ; Cistimo rbx
     xor rcx,rcx ; Cistimo rcx
     xor rdx,rdx ; Cistimo rdx
-    mov qword rax,[num_of_ranges] ; U rax prebacujemo br. opsega
-    mov rbx,2 ; Svaki par sadrzi 2 elementa
-    mul rbx ; Mnozimo sa 2 -> broj elemenata niza
-    mov qword [num_of_elements],rax ; Sacuvacemo broj elemenata u datom polju za kasnije
+    mov qword rax,[num_of_elements] ; U rax prebacujemo br. elemenata
     mov rbx,4
     mul rbx ; Pomnozimo sa 4, jer toliko bajta ima svaki podatak
     mov [buffer_size],rax ; cuvamo velicinu buffera
@@ -67,16 +81,8 @@ _start:
     xor rcx,rcx
     xor rbx,rbx
 
-    ;Otvaranje fajla
-    mov rax,2
-    mov rdi,[inputFilePath]
-    mov rsi,0 ; otvaramo u read modu
-    syscall
-    mov rdi,rax ; U rdi stavljamo FD 
-    cmp rdi,-1
-    je error_end ; provjerili smo da li je uspjesno otvaranje, (u rax se vraca FD, ako je greska -1)
-
     ;Citanje iz fajla
+    pop rdi
     mov rax,0 ; fd
     mov rsi,buffer ;skladistimo podatke u buffer
     mov rdx,[buffer_size] ; citamo buffer_size bajtova
@@ -84,7 +90,6 @@ _start:
 
     mov rax,3
     syscall ; zatvranje fajla
-
 
     xor rcx,rcx
     mov rcx,[num_of_ranges]; broj iteracija
@@ -119,6 +124,18 @@ _start:
         mov rcx,[num_iterations];
 
         vanjskaPetlja:
+            cmp rsi,1 ; 1 nije prost broj
+            je skip
+            ;Racunamo kroijen datog broja
+            mov rax,rsi
+            ;cvtsi2sd  xmm0, eax
+            ;sqrtsd    xmm0, xmm0
+            ;cvttsd2si  eax, xmm0
+
+            ;U r12 korijen broja = do koliko idemo iteracija
+            mov r12,rax
+            cmp r12,1
+            je bottom
             mov rbx,1
             unutrasnjaPetlja:
             inc rbx
@@ -131,8 +148,8 @@ _start:
             inc rax
             mov [counter],rax ; povecavamo brojac
             bottom:
-            cmp rbx,rsi
-            jne unutrasnjaPetlja
+            cmp rbx,r12
+            jl unutrasnjaPetlja
 
         mov rax,[counter]
         cmp rax,1

@@ -10,22 +10,26 @@ int main(int argc,char* argv[])
 {
     FILE *fp_input;
     FILE *fp_output;
-    int numOfRanges = atoi(argv[1])+1;
-    int rangesArray[2*numOfRanges];
+    int numOfRanges;
     int numOfPrime = 0;
 
-    fp_input = fopen(argv[2],"rb");
+    fp_input = fopen(argv[1],"rb");
+
     if(fp_input == NULL){
         ErrorEnd();
     }
 
+    fread(&numOfRanges,sizeof(int),1,fp_input);
+
+    int rangesArray[2*numOfRanges];
+
     fread(rangesArray,sizeof(int),numOfRanges*2,fp_input);
     fclose(fp_input);
 
-    for(int i=0;i<numOfRanges-1;i++){
+    for(int i=0;i<numOfRanges;i++){
         int first = rangesArray[i*2];
         int last = rangesArray[i*2+1];
-        //printf("%d first:%d last:%d\n",i,first,last);
+        printf("%d first:%d last:%d\n",i,first,last);
         if(first>last) ErrorEnd();
         for(int j=first;j<=last;j++){
             int temp=0;
@@ -42,7 +46,7 @@ int main(int argc,char* argv[])
     }
 
     printf("NUM OF PRIME: %d",numOfPrime);
-    fp_output = fopen(argv[3],"wb");
+    fp_output = fopen(argv[2],"wb");
     if(fp_output == NULL){
         ErrorEnd();
     }

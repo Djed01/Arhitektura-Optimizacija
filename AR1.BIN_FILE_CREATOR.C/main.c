@@ -3,23 +3,23 @@
 #include <time.h>
 
 int main(int argc,char* argv[]) {
-    int numOfElements = 2000;
+    int numOfRanges = 100;
+    int numOfElements = 2*numOfRanges;
     FILE *fp = fopen("input.bin","wb");
-    int* rangesArray = calloc(2*numOfElements, sizeof(int));
+    int* rangesArray = calloc(numOfElements, sizeof(int));
     if(fp == NULL) {
         printf("error creating file");
         return -1;
     }
+    fwrite(&numOfRanges,sizeof(int),1,fp);
     int i=0;
-    while(i<numOfElements){
+    while(i<numOfRanges){
         int first = 2;
         int last = 1000;
-        if(first<last){
             rangesArray[i*2] = first;
             rangesArray[i*2+1] = last;
             printf("%d First: %d Last: %d\n",i,rangesArray[i*2],rangesArray[i*2+1]);
             i++;
-        }
     }
     fwrite(rangesArray, sizeof(int), numOfElements, fp);
     fclose(fp);
