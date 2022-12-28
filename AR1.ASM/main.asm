@@ -17,7 +17,7 @@ SECTION .data
     temp_rdx dq 0
 
 SECTION .bss
-    buffer resd 1000000
+    buffer resq 1
     inputFilePath resq 1
     outputFilePath resq 1
     
@@ -84,7 +84,7 @@ _start:
     ;Citanje iz fajla
     pop rdi
     mov rax,0 ; fd
-    mov rsi,buffer ;skladistimo podatke u buffer
+    mov rsi,[buffer] ;skladistimo podatke u buffer
     mov rdx,[buffer_size] ; citamo buffer_size bajtova
     syscall
 
@@ -97,13 +97,13 @@ _start:
     mov rsi,0 ; Brojac za indeksiranje
     xor rax,rax
     xor rbx,rbx
-    
+    mov r13,2
 
     petlja:
         xor rax,rax
         xor rbx,rbx
         xor rdx,rdx
-        mov rdx,buffer
+        mov rdx,[buffer]
         mov eax,dword [rdx+rsi*8] ;prvi element opsega
         mov ebx,dword [rdx+rsi*8+4] ;drugi element opsega
 
@@ -127,10 +127,11 @@ _start:
             cmp rsi,1 ; 1 nije prost broj
             je skip
             ;Racunamo kroijen datog broja
+            xor rdx,rdx
             mov rax,rsi
-            ;cvtsi2sd  xmm0, eax
-            ;sqrtsd    xmm0, xmm0
-            ;cvttsd2si  eax, xmm0
+            div r13
+            sub rax,1 ; ne ukljucujemo 1
+            xor rdx,rdx
 
             ;U r12 korijen broja = do koliko idemo iteracija
             mov r12,rax
@@ -152,7 +153,7 @@ _start:
             jl unutrasnjaPetlja
 
         mov rax,[counter]
-        cmp rax,1
+        cmp rax,0
         jne skip
         mov rax,[counter_of_prime] ;uvecavamo brojac prostih brojeva
         inc rax
@@ -161,7 +162,9 @@ _start:
         mov rax,0
         mov [counter],rax; restartujemo brojac
         inc rsi ; element niza
-        loop vanjskaPetlja
+        sub rcx,1
+        cmp rcx,0
+        jne vanjskaPetlja
 
         xor rdx,rdx
         xor rcx,rcx

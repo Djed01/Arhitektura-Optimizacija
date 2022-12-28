@@ -3,7 +3,7 @@
 #include <time.h>
 
 int main(int argc,char* argv[]) {
-    int numOfRanges = 100;
+    int numOfRanges = 500;
     int numOfElements = 2*numOfRanges;
     FILE *fp = fopen("input.bin","wb");
     int* rangesArray = calloc(numOfElements, sizeof(int));

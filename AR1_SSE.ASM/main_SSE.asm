@@ -8,16 +8,15 @@ SECTION .data
     buffer_size dq 0
     first_element_of_range dq 0
     last_element_of_range dq 0
-    half_of_last_element_of_range dq 0
     num_iterations dq 0
     counter dq 0
     counter_of_prime dq 0
     temp_rcx dq 0
     align 16
-    maska dd 0,0,0,0
+    mask dd 0,0,0,0
     iterationPair dd 0,0,0,0
     temp dd 0,0,0,0
-    ourNumber dd 0,0,0,0
+    number dd 0,0,0,0
 SECTION .bss
     inputFilePath resq 1
     outputFilePath resq 1
@@ -73,7 +72,7 @@ _start:
     mov rdx,2 ; Stavljamo prot value, u nasem slucaju 2, zelimo da pisemo po toj memoriji (kao i da citamo)
     mov r10,22h ; Parametar flags ide u r10 registar, stavljamo MAP_ANONYMOUS
     mov r8,-1 ; File descriptor, za MAP_ANON postavljamo vrijednost -1
-    mov r9,0 ; Podesimo offset na 0
+    mov r12,0 ; Podesimo offset na 0
     mov rax,9 ; Broj sistemskog poziva za mmap
     syscall
     mov qword [buffer],rax ; Sada na adresi [buffer] imamo adresu alocirane memorije
@@ -95,7 +94,7 @@ _start:
     xor rsi,rsi
     mov rsi,0;
 
-petljaInitail:
+loopInitail:
         xor rax,rax
         xor rbx,rbx
         xor rdx,rdx
@@ -118,12 +117,12 @@ petljaInitail:
         mov [temp_rcx],rcx ; sacuvamo u privremeno polje vrijednost rcx-a
         call isItPrime
         cmp r10,0
-        jne nije_prost
+        jne not_prime
         xor rax,rax
         mov rax,[counter_of_prime]
         inc rax
         mov [counter_of_prime],rax
-    nije_prost:
+    not_prime:
         xor rcx,rcx
         mov rcx,[temp_rcx] 
         inc rcx
@@ -132,7 +131,7 @@ petljaInitail:
 
         inc rsi
         cmp rsi,[num_of_ranges]
-        jne petljaInitail
+        jne loopInitail
 
     ; Kreiranje fajla
     mov rax,85 ; Broj sistemskog poziva za kreiranje
@@ -157,22 +156,23 @@ petljaInitail:
 
 
 isItPrime:
-    mov r9,0 ; counter for dividers
+    mov r12,0 ; counter for dividers
     cvtsi2ss xmm0,r8;broj za koji provjeravamo da li je prost konvertujemo FP da bi mogli sa njim raditi operacije
     ;u naznacenu adresu kopiramo 4 puta taj broj
-    MOVSS [ourNumber],  xmm0 
-    MOVSS [ourNumber+4], xmm0
-    MOVSS [ourNumber+8],  xmm0
-    MOVSS [ourNumber+12], xmm0
-    movaps xmm0,[ourNumber] ;ucitavamo ta 4 ista broja sa mem.lokacije u xmm0 registar
+    MOVSS [number],  xmm0 
+    MOVSS [number+4], xmm0
+    MOVSS [number+8],  xmm0
+    MOVSS [number+12], xmm0
+    movaps xmm0,[number] ;ucitavamo ta 4 ista broja sa mem.lokacije u xmm0 registar
     xor rdx,rdx
 
-    ;Racunamo krijen datog broja
+    ;Imamo n/2 iteracija
     mov rax,r8
-    ;cvtsi2sd  xmm0, eax
-    ;sqrtsd    xmm0, xmm0
-    ;cvttsd2si  eax, xmm0
+    mov rbx,2
+    div rbx
     sub rax,1 ; ne ukljucujemo 1
+    xor rdx,rdx
+
 
     mov rcx,4
     div rcx ;rax je rez,rdx ostatak, rax predstavlja broj inicijalnih iteracija a rdx su iteracije za ostatak
@@ -180,17 +180,17 @@ isItPrime:
     cmp r8,1 ;Ukoliko je broj 1 koji provjeravamo znamo da nije prost
     je not_prime
     ;Stavljamo u masku 0,0,0,0
-    mov dword [maska],0
-    mov dword [maska+4],0
-    mov dword [maska+8],0
-    mov dword [maska+12],0
+    mov dword [mask],0
+    mov dword [mask+4],0
+    mov dword [mask+8],0
+    mov dword [mask+12],0
     push rdx ; pushamo ostatak koji ce nam trebati kasnije
     mov rdx,0
     cmp rax,0
-    je kraj_petlje
-petlja:
+    je end_of_loop
+loop:
 	cmp rdx,rax
-	je kraj_petlje ; ako smo dosli do poslednjeg elementa zavrsavamo sa iteracijama
+	je end_of_loop ; ako smo dosli do poslednjeg elementa zavrsavamo sa iteracijama
 	;trebamo na neku lokaciju xmm1 citati podatke staviti 4 iteracije
 	MOVDQU xmm1,xmm0 ; xmm1 nam sluzi kao temp u koji smjestamo broj koji provjeravamo da li je prost
 	cvtsi2ss xmm2,rcx ; u xmm2 stavljamo  rcx koji je brojac
@@ -232,46 +232,46 @@ petlja:
 	
 	;Sada u xmm1 imamo brojeve sa zarezom, a u xmm3 iste brojeve bez zareza
 	;oduzimanje
-	movups xmm4,[maska] ; u xmm4 maska (0,0,0,0)
-	subps xmm1,xmm3 ; oduzimanje
+	movups xmm4,[mask] ; u xmm4 maska (0,0,0,0)
+	subps xmm1,xmm3 ; oduzimanjemaska
 	CMPPS xmm1, xmm4, 0 ; poredimo dobijeni rezultat sa maskom 
     ;ukoliko je jednako nuli u xmm registru ce biti 0 na odgovarajucem mjestu
     ;u suprotnom ce biti ffff...
 	MOVDQU [temp],xmm1 ; prebacujemo rezultat u pocmocno polje
 	mov r11,0 ;sluzi kao pomjeraj kroz [temp]
 	mov r14,0
-provjera:
+check:
 	cmp r14,4
-	je kraj_provjere
+	je end_check
 	cmp dword [temp+r11],0
-	jne povecaj_counter ; ukoliko je 0 povecavamo brojac (djeljiv)
-	jmp nema_povecanja ; u suprotnom ne povecavamo (nije djeljiv)
-povecaj_counter:
-	add r9,1
-nema_povecanja: ;ovo se moze izmjenuti petlju drugacije !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	jne inc_counter ; ukoliko je 0 povecavamo brojac (djeljiv)
+	jmp no_increment ; u suprotnom ne povecavamo (nije djeljiv)
+inc_counter:
+	add r12,1
+no_increment:
 	add r14,1
 	add r11,4
-	jmp provjera
-kraj_provjere:
+	jmp check
+end_check:
 	
 	add rdx,1 ; inkrementujemo brojac
-	jmp petlja
+	jmp loop
 
-kraj_petlje:
+end_of_loop:
     pop rdx ; skidamo sa steka ostak koji nam govori koliko elemenata je preostalo za provjeru
     cmp rdx,0
     mov r11,0;pomjeraj u [temp]
     mov r14,0;brojac iteracija brojeva
-obrada:
+processing:
     cmp r14,rdx;provjeravamo iteracije
-    je kraj_obrade
+    je end_processing
     cvtsi2ss xmm1,rcx; pretvaramo u fp
     movss [temp+r11],xmm1 ; dodajemo na odgovarajucu poziciju [temp]
     add rcx,1 ;prelazimo na sljedeci element
     add r11,4;povecavamo pomjeraj
     add r14,1 ; povecavamo brojac
-    jmp obrada
-kraj_obrade:
+    jmp processing
+end_processing:
     movups xmm1,[temp] ; u xmm1 stavljamo preostale elemente
     divps xmm0,xmm1 ; dijelimo xmm0, u kome je broj koji provjeravamo da li je prost, sa preostalim elementima
     MOVUPS [temp],xmm0 ; rezultat smjestamo u [temp]
@@ -299,19 +299,19 @@ kraj_obrade:
     MOVDQU [temp],xmm0
     mov r11,0 ;pomjeraj
 	mov r14,0 ;brojac
-provjera2:
+check2:
 	cmp r14,rdx
-	je kraj_provjere2
+	je end_check2
 	cmp dword [temp+r11],0
-	jne povecaj_counter2 ;ako je nije 0 povecavamo counter
-	jmp nema_povecanja2 ; ako jeste ne povecavamo
-povecaj_counter2:
-	add r9,1
-nema_povecanja2:
+	jne inc_counter2 ;ako je nije 0 povecavamo counter
+	jmp no_increment2 ; ako jeste ne povecavamo
+inc_counter2:
+	add r12,1
+no_increment2:
 	add r14,1 ;povecavamo brojac
 	add r11,4 ;povecavamo pomjeraj
-	jmp provjera2
-kraj_provjere2:
+	jmp check2
+end_check2:
 
     ;Cistimo xmm registre za sljedecu iteraciju
     xorps xmm0,xmm0 
@@ -320,11 +320,11 @@ kraj_provjere2:
     xorps xmm3,xmm3
     xorps xmm4,xmm4
 
-    cmp r9,1 
-    jne not_prime
+    cmp r12,0
+    jne not_prime2
     mov r10,0
     jmp end
-not_prime:
+not_prime2:
     mov r10,1
 end:
     ret
@@ -339,20 +339,3 @@ error_end:
     mov rdi,0
     syscall
 
-atoi:
-        xor rbx, rbx ; Cistimo rbx, tu cemo ostaviti rezultat
-        xor rcx,rcx ; Ocisticemo i rcx jer cemo sa njim uzimati cifre
-        .top:
-        mov byte cl, [rax] ; Uzimamo jedan karakter
-        inc rax ; Inkrementujemo za jedan bajt
-        ; Provjere da li je dati karakter broj, ako nije kraj
-        cmp cl, '0' 
-        jb .done
-        cmp cl, '9'
-        ja .done
-        sub cl, '0' ; Ova linija vrsi u sustini konverziju
-        imul rbx, 10 ; Pomnozimo trenutni rezultat sa 10 (dostigli smo novu dekadu)
-        add rbx, rcx ; Saberemo trenutnu cifru na rezultat
-        jmp .top 
-        .done:
-        ret

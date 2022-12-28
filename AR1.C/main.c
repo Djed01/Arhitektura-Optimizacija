@@ -29,23 +29,22 @@ int main(int argc,char* argv[])
     for(int i=0;i<numOfRanges;i++){
         int first = rangesArray[i*2];
         int last = rangesArray[i*2+1];
-        printf("%d first:%d last:%d\n",i,first,last);
+        //printf("%d first:%d last:%d\n",i,first,last);
         if(first>last) ErrorEnd();
         for(int j=first;j<=last;j++){
             int temp=0;
-            for(int k=2;k<=last;k++){
+            for(int k=2;k<=j/2;k++){
                 if(j%k==0){
                     temp++;
                 }
             }
-            if(temp==1){
-               // printf("%d \n",j);
+            if(temp==0){
                 numOfPrime++;
             }
         }
     }
 
-    printf("NUM OF PRIME: %d",numOfPrime);
+    //printf("NUM OF PRIME: %d",numOfPrime);
     fp_output = fopen(argv[2],"wb");
     if(fp_output == NULL){
         ErrorEnd();
