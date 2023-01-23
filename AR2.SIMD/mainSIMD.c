@@ -62,7 +62,7 @@ _Bool isItPrime(int num){
         }
     }
     if(counter==0){ //Ako je brojac 0 znaci da je prost
-        printf("%d\n",num);
+       // printf("%d\n",num);
         return true;
     }else{
         return false;
@@ -101,7 +101,7 @@ int main(int argc,char* argv[])
         }
     }
 
-    printf("NUM OF PRIME: %d\n",numOfPrime);
+   // printf("NUM OF PRIME: %d\n",numOfPrime);
     fp_output = fopen(argv[2],"wb");
     if(fp_output == NULL){
         ErrorEnd();

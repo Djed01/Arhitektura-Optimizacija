@@ -31,7 +31,7 @@ int main(int argc,char* argv[])
     for(int i=0;i<numOfRanges;i++){
         int first = rangesArray[i*2];
         int last = rangesArray[i*2+1];
-        if(first>last) return ErrorEnd();
+        if(first>last) ErrorEnd();
         for(int j=first;j<=last;j++){
             int temp=0;
             for(int k=2;k<=j/2;k++){
