@@ -3,7 +3,7 @@
 #include <time.h>
 
 int main(int argc,char* argv[]) {
-    int numOfRanges = 100;
+    int numOfRanges = 1;
     int numOfElements = 2*numOfRanges;
     FILE *fp = fopen("input.bin","wb");
     int* rangesArray = calloc(numOfElements, sizeof(int));
@@ -15,7 +15,7 @@ int main(int argc,char* argv[]) {
     int i=0;
     while(i<numOfRanges){
         int first = 1;
-        int last = 1000;
+        int last = 10000;
             rangesArray[i*2] = first;
             rangesArray[i*2+1] = last;
             printf("%d First: %d Last: %d\n",i,rangesArray[i*2],rangesArray[i*2+1]);

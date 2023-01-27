@@ -33,6 +33,7 @@ int main(int argc,char* argv[])
         int last = rangesArray[i*2+1];
         if(first>last) ErrorEnd();
         for(int j=first;j<=last;j++){
+            if(j != 1){
             int temp=0;
             for(int k=2;k<=j/2;k++){
                 if(j%k==0){
@@ -41,6 +42,7 @@ int main(int argc,char* argv[])
             }
             if(temp==0){
                 numOfPrime++;
+            }
             }
         }
     }

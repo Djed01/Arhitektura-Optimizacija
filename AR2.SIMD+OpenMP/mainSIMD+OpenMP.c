@@ -23,8 +23,6 @@ _Bool isItPrime(int num){
     float temp = 2; //Pomocni brojac od 2 do n
     int counter=0;
     if(initialIterations != 0){
-    //counter se azurira thread safe dodavanjem medjurezultata svake niti 
-    //#pragma omp parallel for reduction(+:counter) 
     for(int i = 0; i<initialIterations;i++){
         __m128 iterationPair = _mm_setr_ps(temp++, temp++, temp++, temp++); //Iteration pair npr. (2,3,4,5)
 
@@ -92,8 +90,8 @@ int main(int argc,char* argv[])
 
     fread(rangesArray,sizeof(int),numOfRanges*2,fp_input);
     fclose(fp_input);
-
-    #pragma omp parallel for reduction(+:numOfPrime)
+    
+    #pragma omp parallel for reduction(+:numOfPrime) 
     for(int i=0;i<numOfRanges;i++){
         int first = rangesArray[i*2];
         int last = rangesArray[i*2+1];
