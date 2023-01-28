@@ -4,11 +4,6 @@
 #include <stdbool.h>
 #include <omp.h>
 
-int ErrorEnd(){
-    printf("Greska sa ulaznim fajlom!");
-    return -1;
-}
-
 _Bool isItPrime(int num){
     __m128 number = _mm_setr_ps((float)num, (float)num, (float)num, (float)num);
     int numOfIterations = (num/2)-1; // idemo do n/2 i ne racunamo 1
@@ -81,21 +76,34 @@ int main(int argc,char* argv[])
     fp_input = fopen(argv[1],"rb");
 
     if(fp_input == NULL){
-        ErrorEnd();
+        printf("Greska sa ulaznim fajlom!");
+        return -1;
     }
 
-    fread(&numOfRanges,sizeof(int),1,fp_input);
+    size_t itemsRead = fread(&numOfRanges,sizeof(int),1,fp_input);
+    if ( itemsRead != 1)
+    {
+        printf("Greska sa ulaznim fajlom!");
+        return -1;
+    }
 
-    int rangesArray[2*numOfRanges];
+   int *rangesArray = (int *)calloc(2 * numOfRanges, sizeof(int));
 
-    fread(rangesArray,sizeof(int),numOfRanges*2,fp_input);
+    size_t itemsRead2 = fread(rangesArray,sizeof(int),numOfRanges*2,fp_input);
+    if ( itemsRead2 != numOfRanges*2)
+    {
+        printf("Greska sa ulaznim fajlom!");
+        return -1;
+    }
     fclose(fp_input);
     
     #pragma omp parallel for reduction(+:numOfPrime) 
     for(int i=0;i<numOfRanges;i++){
         int first = rangesArray[i*2];
         int last = rangesArray[i*2+1];
-        if(first>last) ErrorEnd();
+        if(first>last) {
+            printf("Greska sa ulaznim fajlom!");
+        }
         for(int j=first;j<=last;j++){
             if(isItPrime(j)){
                 numOfPrime++;
@@ -106,7 +114,8 @@ int main(int argc,char* argv[])
     //printf("NUM OF PRIME: %d\n",numOfPrime);
     fp_output = fopen(argv[2],"wb");
     if(fp_output == NULL){
-        ErrorEnd();
+        printf("Greska sa ulaznim fajlom!");
+        return -1;
     }
     fwrite(&numOfPrime, sizeof(int), 1, fp_output);
 

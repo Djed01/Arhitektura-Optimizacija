@@ -47,7 +47,7 @@ _start:
 
     ;Citanje iz fajla
     mov rax,0 ; fd
-    mov rsi,num_of_ranges ;skladistimo podatke u num_of_elements
+    mov rsi,num_of_ranges ;skladistimo broj opsega u num_of_elements
     mov rdx,4 ; citamo 4 bajta (int)
     syscall
 
@@ -56,7 +56,7 @@ _start:
     mov rax,qword [num_of_ranges]
     mov rbx,2
     mul rbx
-    mov [num_of_elements],rax;
+    mov [num_of_elements],rax; Broj elemenata = broj opsega * 2
 
     ;Alokacija memorije za niz opsega
     xor rax,rax ; Cistimo rax
@@ -126,18 +126,18 @@ _start:
         vanjskaPetlja:
             cmp rsi,1 ; 1 nije prost broj
             je skip
-            ;Racunamo kroijen datog broja
+            ;Racunamo n/2
             xor rdx,rdx
             mov rax,rsi
             div r13
             sub rax,1 ; ne ukljucujemo 1
             xor rdx,rdx
 
-            ;U r12 korijen broja = do koliko idemo iteracija
+            ;U r12 n/2 = do koliko idemo iteracija
             mov r12,rax
             cmp r12,1
             je bottom
-            mov rbx,1
+            mov rbx,1 ;Brojac
             unutrasnjaPetlja:
             inc rbx
             xor rdx,rdx
@@ -149,7 +149,7 @@ _start:
             inc rax
             mov [counter],rax ; povecavamo brojac
             bottom:
-            cmp rbx,r12
+            cmp rbx,r12 ;Poredimo brojac sa n/2
             jl unutrasnjaPetlja
 
         mov rax,[counter]
@@ -161,7 +161,7 @@ _start:
         skip:
         mov rax,0
         mov [counter],rax; restartujemo brojac
-        inc rsi ; element niza
+        inc rsi ; sljedeci element niza
         sub rcx,1
         cmp rcx,0
         jne vanjskaPetlja
@@ -173,7 +173,7 @@ _start:
         mov rcx,qword [temp_rcx]
         mov rsi,qword [temp_rsi]
         xor rax,rax
-        mov [temp_rsi],rax
+        mov [temp_rsi],rax ;Restartujemo temp_rsi
 
         inc rsi ; uvecavamo brojac
 
@@ -218,21 +218,3 @@ error_end:
     mov rax,60
     mov rdi,0
     syscall
-
-atoi:
-        xor rbx, rbx ; Cistimo rbx, tu cemo ostaviti rezultat
-        xor rcx,rcx ; Ocisticemo i rcx jer cemo sa njim uzimati cifre
-        .top:
-        mov byte cl, [rax] ; Uzimamo jedan karakter
-        inc rax ; Inkrementujemo za jedan bajt
-        ; Provjere da li je dati karakter broj, ako nije kraj
-        cmp cl, '0' 
-        jb .done
-        cmp cl, '9'
-        ja .done
-        sub cl, '0' ; Ova linija vrsi u sustini konverziju
-        imul rbx, 10 ; Pomnozimo trenutni rezultat sa 10 (dostigli smo novu dekadu)
-        add rbx, rcx ; Saberemo trenutnu cifru na rezultat
-        jmp .top 
-        .done:
-        ret

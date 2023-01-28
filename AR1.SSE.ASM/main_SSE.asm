@@ -116,7 +116,7 @@ loopInitail:
         mov r8,rcx
         mov [temp_rcx],rcx ; sacuvamo u privremeno polje vrijednost rcx-a
         call isItPrime
-        cmp r10,0
+        cmp r10,0 ; r10 sluzi kao identfikator
         jne not_prime
         xor rax,rax
         mov rax,[counter_of_prime]
@@ -156,14 +156,14 @@ loopInitail:
 
 
 isItPrime:
-    mov r12,0 ; counter for dividers
+    mov r12,0 ; brojac za djelioce
     cvtsi2ss xmm0,r8;broj za koji provjeravamo da li je prost konvertujemo FP da bi mogli sa njim raditi operacije
     ;u naznacenu adresu kopiramo 4 puta taj broj
     MOVSS [number],  xmm0 
     MOVSS [number+4], xmm0
     MOVSS [number+8],  xmm0
     MOVSS [number+12], xmm0
-    movaps xmm0,[number] ;ucitavamo ta 4 ista broja sa mem.lokacije u xmm0 registar
+    movaps xmm0,[number] ;ucitavamo ta 4 ista broja sa memorijske lokacije u xmm0 registar
     xor rdx,rdx
 
     ;Imamo n/2 iteracija
@@ -173,7 +173,7 @@ isItPrime:
     sub rax,1 ; ne ukljucujemo 1
     xor rdx,rdx
 
-
+    ;Dijelimo sa na grupe po 4 elementa
     mov rcx,4
     div rcx ;rax je rez,rdx ostatak, rax predstavlja broj inicijalnih iteracija a rdx su iteracije za ostatak
     mov rcx,2 ;i
@@ -235,7 +235,7 @@ loop:
 	movups xmm4,[mask] ; u xmm4 maska (0,0,0,0)
 	subps xmm1,xmm3 ; oduzimanjemaska
 	CMPPS xmm1, xmm4, 0 ; poredimo dobijeni rezultat sa maskom 
-    ;ukoliko je jednako nuli u xmm registru ce biti 0 na odgovarajucem mjestu
+    ;ukoliko je jednako nuli (djeljiv) u xmm registru ce biti 0 na odgovarajucem mjestu
     ;u suprotnom ce biti ffff...
 	MOVDQU [temp],xmm1 ; prebacujemo rezultat u pocmocno polje
 	mov r11,0 ;sluzi kao pomjeraj kroz [temp]
